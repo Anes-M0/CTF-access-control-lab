@@ -1,0 +1,53 @@
+/*
+ * BONUS CHALLENGE -- fix the confused deputy.
+ *
+ * This file starts out IDENTICAL to the vulnerable /opt/lab/bin/read-vault.
+ * Edit it so that:
+ *   1. a user can still read their OWN file under /var/log/user-journals/
+ *      (e.g. student -> /var/log/user-journals/student.log), and
+ *   2. it refuses to open any other file -- including another user's
+ *      journal and /root/flag2.txt -- no matter what path is given.
+ *
+ * Hint: the program can ask the kernel who is REALLY running it
+ * (see getuid(2) and getpwuid(3)) instead of trusting argv[1]. A deputy
+ * that derives the object from the caller's verified identity, rather
+ * than from a caller-supplied name, cannot be tricked this way.
+ *
+ * Grade your fix with:   sudo /usr/local/bin/vault-grade
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char **argv) {
+    FILE *fp;
+    char buf[256];
+
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <file>\n", argv[0]);
+        return 1;
+    }
+
+ uid = getuid(void);
+
+    if (uid == 0) {
+    fp = fopen(argv[1], "r");
+     }
+  
+
+
+    fp = fopen(argv[1], "r");
+    if (!fp) {
+        perror("fopen");
+        return 1;
+    }
+
+    printf("[vault-reader] privileged read of: %s\n", argv[1]);
+
+    while (fgets(buf, sizeof(buf), fp)) {
+        fputs(buf, stdout);
+    }
+
+    fclose(fp);
+    return 0;
+}

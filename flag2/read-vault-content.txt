@@ -1,0 +1,40 @@
+#!/bin/bash
+# vault-grade -- must be run as: sudo /usr/local/bin/vault-grade
+set -u
+SRC=/home/student/read-vault-fixed.c
+BIN=/opt/lab/bin/read-vault-fixed
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Run this with: sudo /usr/local/bin/vault-grade"
+  exit 1
+fi
+if [ ! -f "$SRC" ]; then
+  echo "Missing $SRC"
+  exit 1
+fi
+
+gcc -O2 -Wall -o "$BIN" "$SRC" || { echo "Compile error -- fix it and retry."; exit 1; }
+chown root:root "$BIN"
+chmod 4755 "$BIN"
+
+OWN_OK=0
+sudo -u student "$BIN" /var/log/user-journals/student.log >/tmp/vg_own.log 2>&1
+grep -q "JOURNAL: student" /tmp/vg_own.log && OWN_OK=1
+
+ROOT_BLOCKED=0
+sudo -u student "$BIN" /root/flag2.txt >/tmp/vg_root.log 2>&1
+grep -q "FLAG{" /tmp/vg_root.log || ROOT_BLOCKED=1
+
+OTHER_BLOCKED=0
+sudo -u student "$BIN" /var/log/user-journals/analyst.log >/tmp/vg_other.log 2>&1
+grep -q "ANALYST-JOURNAL" /tmp/vg_other.log || OTHER_BLOCKED=1
+
+echo "own journal still readable      : $OWN_OK       (should be 1)"
+echo "/root/flag2.txt blocked         : $ROOT_BLOCKED  (should be 1)"
+echo "analyst's journal blocked       : $OTHER_BLOCKED (should be 1)"
+
+if [ "$OWN_OK" -eq 1 ] && [ "$ROOT_BLOCKED" -eq 1 ] && [ "$OTHER_BLOCKED" -eq 1 ]; then
+  echo "BONUS{deputy_checks_who_is_asking}"
+else
+  echo "Not solved yet -- see /tmp/vg_own.log, /tmp/vg_root.log, /tmp/vg_other.log"
+fi
